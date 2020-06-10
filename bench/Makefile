@@ -20,3 +20,6 @@ race:
 clean:
 	rm -f isucon8q-initial-dataset.sql.gz
 	go clean -r -n -x -cache -testcache
+
+ben:
+	./bin/bench -remotes=127.0.0.1:8080 oputput result.json
