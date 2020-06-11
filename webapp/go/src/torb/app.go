@@ -17,6 +17,8 @@ import (
 	"strings"
 	"time"
 
+	_ "net/http/pprof"
+
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/gorilla/sessions"
 	"github.com/labstack/echo"
@@ -319,12 +321,6 @@ func main() {
 		log.Println(http.ListenAndServe("localhost:6060",
 			nil))
 	}()
-	// pm := http.NewServeMux()
-	// pm.Handle("/debug/pprof/profile", http.HandleFunc(pprof.Profile))
-	// ps := &http.Server{
-	// 	Addr: "127.0.0.1:6060",
-	// 	Handler: pm,
-	// }
 
 	dsn := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?parseTime=true&charset=utf8mb4",
 		os.Getenv("DB_USER"), os.Getenv("DB_PASS"),
