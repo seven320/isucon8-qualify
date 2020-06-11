@@ -9,6 +9,7 @@ import (
 	"html/template"
 	"io"
 	"log"
+	"net/http"
 	"os"
 	"os/exec"
 	"sort"
@@ -184,6 +185,7 @@ func getLoginAdministrator(c echo.Context) (*Administrator, error) {
 	return &administrator, err
 }
 
+// DBにあるイベント取得
 func getEvents(all bool) ([]*Event, error) {
 	tx, err := db.Begin()
 	if err != nil {
@@ -191,6 +193,7 @@ func getEvents(all bool) ([]*Event, error) {
 	}
 	defer tx.Commit()
 
+	// イベント全部いるか？
 	rows, err := tx.Query("SELECT * FROM events ORDER BY id ASC")
 	if err != nil {
 		return nil, err
@@ -311,6 +314,18 @@ var db *sql.DB
 
 // ここから起動
 func main() {
+	// pprof
+	go func() {
+		log.Println(http.ListenAndServe("localhost:6060",
+			nil))
+	}()
+	// pm := http.NewServeMux()
+	// pm.Handle("/debug/pprof/profile", http.HandleFunc(pprof.Profile))
+	// ps := &http.Server{
+	// 	Addr: "127.0.0.1:6060",
+	// 	Handler: pm,
+	// }
+
 	dsn := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?parseTime=true&charset=utf8mb4",
 		os.Getenv("DB_USER"), os.Getenv("DB_PASS"),
 		os.Getenv("DB_HOST"), os.Getenv("DB_PORT"),
@@ -336,6 +351,8 @@ func main() {
 	e.Use(session.Middleware(sessions.NewCookieStore([]byte("secret"))))
 	e.Use(middleware.LoggerWithConfig(middleware.LoggerConfig{Output: os.Stderr}))
 	e.Static("/", "public")
+
+	// ルーティング
 	e.GET("/", func(c echo.Context) error {
 		events, err := getEvents(false)
 		if err != nil {
@@ -350,6 +367,7 @@ func main() {
 			"origin": c.Scheme() + "://" + c.Request().Host,
 		})
 	}, fillinUser)
+
 	e.GET("/initialize", func(c echo.Context) error {
 		cmd := exec.Command("../../db/init.sh")
 		cmd.Stdin = os.Stdin
